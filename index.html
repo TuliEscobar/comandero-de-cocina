@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🍽️ Comandero de Cocina</title>
+  <meta name="theme-color" content="#FF6B35">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #FF6B35;
+      --success: #00C853;
+      --dark: #1a1a1a;
+      --light: #f5f5f5;
+      --white: #FFFFFF;
+      --accent: #D4A574;
+      --text: #333;
+      --text-muted: #888;
+      --bg: #FFFFFF;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--dark);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 14px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .tab.active { color: var(--primary); }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 25%;
+      width: 50%;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .tab .badge {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 11px;
+      margin-left: 3px;
+    }
+
+    /* SCREEN */
+    .screen { display: none; padding: 16px; }
+    .screen.active { display: block; }
+
+    /* EMPTY STATE */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty .icon { font-size: 64px; opacity: 0.5; margin-bottom: 16px; }
+    .empty h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+
+    /* ===== PANTALLA: MENÚ ===== */
+    .categorias {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .categorias::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0;
+      background: #f0f0f0;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cat-tab.active {
+      background: #FFF3E0;
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .platos-list { display: flex; flex-direction: column; gap: 10px; }
+    .plato-btn {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .plato-btn.selected {
+      border-color: #00C853;
+      background: #E8F5E9;
+      box-shadow: 0 0 0 3px rgba(0,200,83,0.25);
+    }
+    .plato-btn.selected .nombre {
+      color: #00C853;
+    }
+    .plato-btn.selected .cantidad-control {
+      background: #00C853;
+    }
+    .plato-btn:active { transform: scale(0.97); }
+
+    .plato-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .plato-btn .nombre { font-size: 16px; font-weight: 700; color: #111; line-height: 1.3; }
+    .plato-btn .ingredientes { font-size: 12px; color: var(--text-muted); line-height: 1.3; }
+    .nota-chip {
+      display: inline-block;
+      background: #FFF8E1;
+      color: #E65100;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 4px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .btn-nota-menu {
+      background: rgba(212,165,116,0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    /* BARRA SELECCIÓN */
+    .selected-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 10px 16px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+      z-index: 200;
+    }
+    .selected-count { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+    .generar-btn {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .generar-btn:active { opacity: 0.8; }
+    .generar-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* CONTROLES CANTIDAD */
+    .cantidad-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .cant-btn {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+    .cant-num { font-size: 14px; font-weight: 700; min-width: 22px; text-align: center; }
+
+    /* ===== PANTALLA: ACTIVAS ===== */
+    .comanda-urgente {
+      border: 2px solid #FF6B35 !important;
+      box-shadow: 0 8px 32px rgba(255,107,53,0.25) !important;
+    }
+    .comanda-normal { opacity: 0.92; }
+    .comanda-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid #f0f0f0;
+    }
+    .comanda-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .cat-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .comanda-header-right { display: flex; align-items: center; gap: 8px; }
+    .comanda-urgencia-label {
+      background: #FF6B35;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .comanda-numero {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+      white-space: nowrap;
+    }
+    .plato-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .plato-item:last-child { border-bottom: none; }
+    .plato-nombre {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .plato-ingredientes {
+      font-size: 15px;
+      color: #555;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+    .plato-nota {
+      font-size: 14px;
+      color: #FF9800;
+      font-style: italic;
+      margin-top: 3px;
+    }
+    .comanda-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+    .total-platos { font-size: 13px; color: #555; font-weight: 500; }
+    .delete-btn {
+      background: rgba(212,165,116,0.15);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #a0522d;
+      cursor: pointer;
+    }
+    .delete-btn:active { background: rgba(212,165,116,0.3); }
+
+    /* FINALIZAR BTN */
+    .finalizar-btn {
+      background: var(--success);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .finalizar-btn:active { opacity: 0.8; }
+
+    /* COMPLETAR BTN */
+    .completar-btn {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .completar-btn:active { opacity: 0.8; }
+
+    /* ===== PANTALLA: HISTORIAL ===== */
+    .historial-item {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      opacity: 0.85;
+      border: 1px solid #e8e8e8;
+    }
+    .historial-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .historial-fecha {
+      font-size: 12px;
+      color: #999;
+    }
+    .historial-cat-plato {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .historial-items {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* ===== MODALES ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.25s ease-out;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .modal-body { padding: 20px; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 26px;
+      color: #888;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-q { font-size: 15px; color: #666; text-align: center; margin-bottom: 16px; }
+    .resumen-list { display: flex; flex-direction: column; gap: 8px; }
+    .resumen-item {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .resumen-nota {
+      font-size: 12px;
+      color: #FF9800;
+      font-style: italic;
+      margin-top: 2px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid #eee;
+    }
+    .btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-cancel { background: #f0f0f0; color: #666; }
+    .btn-confirm { background: var(--success); color: #fff; display: flex; align-items: center; gap: 6px; justify-content: center; }
+
+    /* NOTA MODAL */
+    .nota-menu-input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      margin-top: 10px;
+    }
+    .nota-menu-input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .nota-chip {
+      display: inline-block;
+      background: #FFF8E1;
+      color: #E65100;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 390px) {
+      .plato-btn .nombre { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Comandero</h1>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tabMenu" onclick="switchTab('menu')">&#128218; Menú</button>
+  <button class="tab" id="tabActivas" onclick="switchTab('activas')">&#9889; Activas <span class="badge" id="badgeActivas"></span></button>
+  <button class="tab" id="tabHistorial" onclick="switchTab('historial')">&#128196; Historial</button>
+</div>
+
+<!-- PANTALLA: MENÚ -->
+<div class="screen active" id="screenMenu">
+  <div class="categorias" id="categoriasContainer"></div>
+  <div class="platos-list" id="platosContainer"></div>
+  <div class="selected-bar" id="selectedBar" style="display:none;">
+    <span class="selected-count" id="selectedCount">0 platos</span>
+    <button class="generar-btn" id="generarBtn" onclick="abrirModal()">Generar Comanda</button>
+  </div>
+</div>
+
+<!-- PANTALLA: ACTIVAS -->
+<div class="screen" id="screenActivas">
+  <div id="activasContainer"></div>
+</div>
+
+<!-- PANTALLA: HISTORIAL -->
+<div class="screen" id="screenHistorial">
+  <div id="historialContainer"></div>
+</div>
+
+<!-- MODAL: CONFIRMAR COMANDA -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModalConfirm(event)">
+  <div class="modal" id="modalContentConfirmar">
+    <div class="modal-header">
+      <span>Confirmar Comanda</span>
+      <button class="modal-close" onclick="cerrarModalConfirm(null,true)">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBodyConfirmar"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="event.stopPropagation();cerrarModalConfirm(null,true)">Cancelar</button>
+      <button class="btn btn-confirm" onclick="event.stopPropagation();crearComanda()">&#10003; Generar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOTA EN MENÚ -->
+<div class="modal-overlay" id="notaMenuOverlay" onclick="cerrarModalNota(event)">
+  <div class="modal" id="notaMenuContent">
+    <div class="modal-header">
+      <span id="notaMenuTitulo">Nota del plato</span>
+      <button class="modal-close" onclick="cerrarModalNota(null,true)">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="notaMenuPlato" style="font-weight:600;font-size:17px;color:var(--text);margin-bottom:10px;"></p>
+      <textarea class="nota-menu-input" id="notaMenuInput" rows="3" placeholder="Ej: sin cebolla, extra queso..."></textarea>
+      <div id="notaMenuChip" style="display:none;margin-top:8px;">
+        <span class="nota-chip" id="notaMenuChipTexto"></span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="event.stopPropagation();cerrarModalNota(null,true)">Cancelar</button>
+      <button class="btn btn-confirm" onclick="event.stopPropagation();guardarNotaMenu()">&#10003; Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== MENÚ =====
+const menu = {"menu": [{"categoria": "Panesanos", "icono": "🥪", "platos": [{"id": "pan-1", "nombre": "Mortadella", "ingredientes": "5 fetas de mortadela"}, {"id": "pan-2", "nombre": "Mortadella di Campeone", "ingredientes": "5 fetas de mortadela, tomate, rúcula y crema pistacho"}, {"id": "pan-3", "nombre": "Grandioso", "ingredientes": "Milan, rucula, queso rayado, crema de aceitunas"}, {"id": "pan-4", "nombre": "Verdura", "ingredientes": "Berenjena, calabacin, pimientos, rucula, crema de aceitunas"}, {"id": "pan-5", "nombre": "Caprese", "ingredientes": "Mozzarella, tomate, albahaca, balsamico"}, {"id": "pan-6", "nombre": "Pesto Caprese", "ingredientes": "Mozzarella, Cherry con ajo, albahaca, pesto"}, {"id": "pan-7", "nombre": "Amore Crudo", "ingredientes": "Crudo, tomate, rucula, aceite de trufa, miel, crema de trufa"}, {"id": "pan-8", "nombre": "Il Capo", "ingredientes": "Cotto, queso rayado, berenjena?, crema de trufa"}, {"id": "pan-9", "nombre": "Tonno Buono", "ingredientes": "Atun, tomate, rucula, aceite de limon, crema de aceituna ?"}, {"id": "pan-10", "nombre": "Pianeta Avocado", "ingredientes": "Tomate, rucula, aguacate, crema de aceitunas"}, {"id": "pan-11", "nombre": "Amante", "ingredientes": "Crudo, burrata, higos*, balsamico de higo, crema de pistaccio"}, {"id": "pan-12", "nombre": "Vita bianca", "ingredientes": "Cotto, burrata, crema de higo, crema de aceitunas, aceite de trufa"}]}, {"categoria": "Pinsas", "icono": "🍕", "platos": [{"id": "pinsa-1", "nombre": "Donna", "ingredientes": "Salsa, mozzarella, Cherry"}, {"id": "pinsa-2", "nombre": "Capri", "ingredientes": "Salsa, mozzarella, cotto, queso rayado, albahaca"}, {"id": "pinsa-3", "nombre": "Capricciosa", "ingredientes": "Salsa, mozzarella, crudo, queso rayado, albahaca"}, {"id": "pinsa-4", "nombre": "Pistaccione", "ingredientes": "mozzarella, crema de pistacho, mortadela, pistacho triturado, pesto en manga"}, {"id": "pinsa-5", "nombre": "Fueguita", "ingredientes": "Salsa, provolone, mozzarella, espianata, aceite picante"}, {"id": "pinsa-6", "nombre": "Tonno", "ingredientes": "Salsa, atun, cebolla, aceitunas"}, {"id": "pinsa-7", "nombre": "Amore", "ingredientes": "Salsa, mozzarella, breasaola, aceite de trufa, crema picante"}, {"id": "pinsa-8", "nombre": "Pesto", "ingredientes": "Mozzarella, Cherry al horno, pesto, albahaca"}, {"id": "pinsa-9", "nombre": "Vegetariana", "ingredientes": "Queso, verduras a la parrilla, cherry al horno, rucula"}, {"id": "pinsa-10", "nombre": "Noruega", "ingredientes": "Queso crema, rucula, aguacate, salmon"}, {"id": "pinsa-11", "nombre": "Tutti", "ingredientes": "Mozzarella, fresa, plátano"}, {"id": "pinsa-12", "nombre": "Tutti trufa", "ingredientes": "Crema de trufa, salsa de trufa, trufa"}]}, {"categoria": "Ensaladas", "icono": "🥗", "platos": [{"id": "ens-1", "nombre": "Feta", "ingredientes": "lechuga, tomates gordos, pepino, cebolla, aceitunas, queso rayado, feta, vinagreta"}, {"id": "ens-2", "nombre": "Pollo", "ingredientes": "lechuga, Cherry, queso rayado, nueces, cesar, pollo"}, {"id": "ens-3", "nombre": "Salmon y aguacate", "ingredientes": "lechuga, rodajas de tomate, aguacate, salmon, sesamo, soja"}, {"id": "ens-4", "nombre": "Atun", "ingredientes": "lechuga, rodajas de tomate, alcaparras, atun, cebolla, cesar"}]}, {"categoria": "Platos", "icono": "🍝", "platos": [{"id": "plt-1", "nombre": "Tabla Anti Pasti", "ingredientes": "Cotto (4/2), Crudo (4/2), Mortadella (4/2), Salame (10/5), Espianata (10/5), Provolone (8/4), Parmesano (6/3), Pecorino (4/2), Scarmoza (8/4), Mozzarella (abierta), miel con aceite de trufa, aceitunas, uvas, frutos secos, pan"}, {"id": "plt-2", "nombre": "Tabla de quesos", "ingredientes": "Provolone 6, Scamorsa 6, Parmesano 6, Pecorino 6, Nueces, aceite de trufa y miel, uva"}, {"id": "plt-3", "nombre": "Caprese mozzarella", "ingredientes": "Mozzarella cortada al centro, tomates grandes 4 al rededor, rucula alrededor, tomates Cherry, balsamico"}, {"id": "plt-4", "nombre": "Caprese di burrata", "ingredientes": "pesto, burrata al centro, pesto arriba, rucula alrededor, tomate con ajo alrededor de la burrata, nalsamico, aceite y oregano"}, {"id": "plt-5", "nombre": "Caprese bresaola", "ingredientes": "Tabla de madera, bresaola 8, a la mitad rucula, queso rallado, aceite de limon, rayadura de limon"}, {"id": "plt-6", "nombre": "Bolognesa", "ingredientes": "1 cucharon lleno de bolognesa, tagliatelle"}, {"id": "plt-7", "nombre": "Pesto Gnocci", "ingredientes": "2 cucharones de crema, 2 cucharas de pesto, gnocchi"}, {"id": "plt-8", "nombre": "Arrabiata", "ingredientes": "1 cucharada de aceituna picante, 2 aji picante, 2 salsa de tomate, rigatoni"}, {"id": "plt-9", "nombre": "Pomodoro", "ingredientes": "2 cucharones de salsa de tomate, rigatoni"}, {"id": "plt-10", "nombre": "Gnocci a la sorrentina", "ingredientes": "1.5 de salsa de tomate, 1 puñado de muzza, cocinarlo en la Merry, sale en bowl chico"}, {"id": "plt-11", "nombre": "Trufa tagliatelle", "ingredientes": "2 mantequillas, 2 cucharas de pesto de trufa, 1 bowl de queso, 4 rodajas de trufa, pistacho molido, queso"}]}]};
+
+// ===== ESTADO =====
+let categorias = menu.menu;
+let categoriaSeleccionada = categorias[0].categoria;
+let platosSeleccionados = [];
+let comandas = [];
+
+// ===== LOAD / SAVE =====
+function saveData() {
+  localStorage.setItem('comandero_comandas', JSON.stringify(comandas));
+}
+function loadData() {
+  try {
+    const d = localStorage.getItem('comandero_comandas');
+    if (d) comandas = JSON.parse(d);
+  } catch(e) { comandas = []; }
+}
+
+// ===== HELPERS =====
+function getPlatoById(id) {
+  for (const cat of categorias) {
+    const p = cat.platos.find(x => x.id === id);
+    if (p) return { plato: p, categoria: cat.categoria };
+  }
+  return null;
+}
+
+function formatoHora(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString() + ' ' +
+    String(d.getHours()).padStart(2, '0') + ':' +
+    String(d.getMinutes()).padStart(2, '0');
+}
+
+// ===== RENDER: MENÚ =====
+function renderCategorias() {
+  const el = document.getElementById('categoriasContainer');
+  el.innerHTML = categorias.map(c =>
+    '<button class="cat-tab ' + (c.categoria === categoriaSeleccionada ? 'active' : '') +
+    '" onclick="seleccionarCategoria(\'' + c.categoria.replace(/\'/g,"\\'") + '\')">' +
+    c.icono + ' ' + c.categoria + '</button>'
+  ).join('');
+}
+
+function renderPlatos() {
+  const cat = categorias.find(c => c.categoria === categoriaSeleccionada);
+  const el = document.getElementById('platosContainer');
+  if (!cat) { el.innerHTML = ''; return; }
+  el.innerHTML = cat.platos.map(p => {
+    const sel = platosSeleccionados.find(s => s.id === p.id);
+    const notaSel = sel ? (sel.nota || '') : '';
+    const notaChip = notaSel ? '<div class="nota-chip">' + notaSel + '</div>' : '';
+    return '<div class="plato-btn ' + (sel ? 'selected' : '') +
+      '" onclick="togglePlato(\'' + p.id + '\')">' +
+      '<div class="plato-left">' +
+        '<div class="nombre">' + p.nombre +
+        (sel ? '<span style="font-size:13px;color:#888;font-weight:400;"> (' + sel.cantidad + ')</span>' : '') +
+        '</div>' +
+        '<div class="ingredientes">' + p.ingredientes + '</div>' +
+        notaChip +
+        '<div style="margin-top:6px; display:flex; gap:4px; align-items:center;">' +
+          '<button class="btn-nota-menu" onclick="event.stopPropagation(); abrirNotaMenu(\'' + p.id + '\')">Nota</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">' +
+        (sel ? ('<div class="cantidad-control">' +
+          '<button class="cant-btn" onclick="event.stopPropagation(); cambiarCantidad(\'' + p.id + '\', -1)">−</button>' +
+          '<span class="cant-num">' + sel.cantidad + '</span>' +
+          '<button class="cant-btn" onclick="event.stopPropagation(); cambiarCantidad(\'' + p.id + '\', 1)">+</button>' +
+        '</div>') : '') +
+        (sel ? '<span style="font-size:14px; font-weight:700; color:var(--accent);">x' + sel.cantidad + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderSelectedBar() {
+  const bar = document.getElementById('selectedBar');
+  const count = document.getElementById('selectedCount');
+  const btn = document.getElementById('generarBtn');
+  const total = platosSeleccionados.reduce((a, p) => a + p.cantidad, 0);
+  bar.style.display = total > 0 ? 'flex' : 'none';
+  count.textContent = total + ' plato' + (total !== 1 ? 's' : '');
+  btn.disabled = total === 0;
+}
+
+// ===== RENDER: COMANDAS ACTIVAS =====
+function renderActivas() {
+  console.log('[RENDER] renderActivas() comandas:', comandas.length);
+  const el = document.getElementById('activasContainer');
+  const badge = document.getElementById('badgeActivas');
+  const activas = comandas.filter(c => !c.completada);
+  badge.textContent = activas.length ? activas.length : '';
+  console.log('[RENDER] activas:', activas.length);
+
+  if (activas.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="icon">&#9889;</div><h2>No hay comandas activas</h2><p>Ve al Menú y genera una.</p></div>';
+    return;
+  }
+
+  el.innerHTML = activas.sort((a, b) => a.id - b.id).map((c, idx) => {
+    console.log('[RENDER] render comanda id:', c.id, 'platos:', c.platos.length);
+    return '<div class="comanda-card comanda-normal" id="comanda-' + c.id + '">' +
+      '<div class="comanda-header">' +
+        '<div>' +
+          '<div class="cat-label">' + (c.categoria || '') + '</div>' +
+          '<div style="font-size:17px;font-weight:700;color:var(--text);margin-top:3px;">' + (c.platos[0] ? c.platos[0].nombre : '') + '</div>' +
+        '</div>' +
+        '<div class="comanda-header-right">' +
+          '<div class="comanda-numero">#' + (idx + 1) + '</div>' +
+        '</div>' +
+      '</div>' +
+      c.platos.map(p => '<div class="plato-item"><div>' +
+        '<div class="plato-nombre">' + p.nombre + ' <span style="font-size:15px;font-weight:500;color:#aaa;">x' + p.cantidad + '</span></div>' +
+        (p.ingredientes ? '<div class="plato-ingredientes">' + p.ingredientes + '</div>' : '') +
+        (p.nota ? '<div class="plato-nota">&#9997; ' + p.nota + '</div>' : '') +
+        '</div><div>' +
+        '<button class="completar-btn" onclick="completarComanda(' + c.id + ')" title="Completar">&#10003;</button>' +
+        '</div></div>').join('') +
+      '<div class="comanda-footer">' +
+        '<span class="total-platos">' + c.platos.reduce((a,p) => a + p.cantidad, 0) + ' platos</span>' +
+        '<button class="finalizar-btn" onclick="finalizarComanda(' + c.id + ')">✓ Finalizar</button>' +
+        '<button class="delete-btn" onclick="eliminarComanda(' + c.id + ')">🗑 Eliminar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  console.log('[RENDER] innerHTML length:', el.innerHTML.length);
+}
+
+// ===== RENDER: HISTORIAL =====
+function renderHistorial() {
+  const el = document.getElementById('historialContainer');
+  const completadas = comandas.filter(c => c.completada).sort((a, b) => b.id - a.id);
+  if (completadas.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="icon">&#128196;</div><h2>No hay historial</h2><p>Las comandas completadas aparecen aquí.</p></div>';
+    return;
+  }
+  el.innerHTML = completadas.map((c, idx) =>
+    '<div class="historial-item">' +
+      '<div class="historial-header">' +
+        '<span class="historial-fecha">' + formatoHora(c.id) + '</span>' +
+        '<span class="comanda-numero" style="font-size:14px;">#' + (idx + 1) + '</span>' +
+      '</div>' +
+      '<div class="historial-cat-plato">' + (c.categoria || '') + ' — ' + (c.platos[0] ? c.platos[0].nombre : '') + '</div>' +
+      '<div class="historial-items">' + c.platos.map(p => p.nombre + ' x' + p.cantidad).join(', ') + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+// ===== INTERACCIONES MENÚ =====
+function seleccionarCategoria(cat) {
+  categoriaSeleccionada = cat;
+  renderCategorias();
+  renderPlatos();
+}
+
+function togglePlato(id) {
+  const info = getPlatoById(id);
+  if (!info) return;
+  const idx = platosSeleccionados.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    platosSeleccionados.splice(idx, 1);
+  } else {
+    platosSeleccionados.push({
+      id: info.plato.id,
+      nombre: info.plato.nombre,
+      ingredientes: info.plato.ingredientes,
+      categoria: info.categoria,
+      cantidad: 1,
+      nota: ''
+    });
+  }
+  renderPlatos();
+  renderSelectedBar();
+}
+
+function cambiarCantidad(id, delta) {
+  const sel = platosSeleccionados.find(p => p.id === id);
+  if (!sel) return;
+  sel.cantidad = Math.max(1, sel.cantidad + delta);
+  renderPlatos();
+  renderSelectedBar();
+}
+
+// ===== NOTA EN MENÚ =====
+let notaMenuPlatoId = null;
+
+function abrirNotaMenu(id) {
+  console.log('[NOTA] abrirNotaMenu() id=', id);
+  const sel = platosSeleccionados.find(p => p.id === id);
+  notaMenuPlatoId = id;
+  document.getElementById('notaMenuTitulo').textContent = 'Nota del plato';
+  document.getElementById('notaMenuPlato').textContent = sel ? sel.nombre : '';
+  document.getElementById('notaMenuInput').value = sel && sel.nota ? sel.nota : '';
+  document.getElementById('notaMenuChip').style.display = (sel && sel.nota) ? 'block' : 'none';
+  document.getElementById('notaMenuChipTexto').textContent = sel && sel.nota ? sel.nota : '';
+  document.getElementById('notaMenuOverlay').classList.add('open');
+}
+
+function cerrarModalNota(e, force) {
+  console.log('[NOTA] cerrarModalNota() force=', force, 'e=', !!e);
+  if (force || !e || e.target.id === 'notaMenuOverlay') {
+    document.getElementById('notaMenuOverlay').classList.remove('open');
+    notaMenuPlatoId = null;
+  }
+}
+
+function guardarNotaMenu() {
+  console.log('[NOTA] guardarNotaMenu() id=', notaMenuPlatoId);
+  if (notaMenuPlatoId === null) { console.warn('[NOTA] id es null!'); return; }
+  const val = document.getElementById('notaMenuInput').value.trim();
+  console.log('[NOTA] valor:', val);
+  const sel = platosSeleccionados.find(p => p.id === notaMenuPlatoId);
+  console.log('[NOTA] plato encontrado:', sel);
+  if (sel) { sel.nota = val; renderPlatos(); renderSelectedBar(); console.log('[NOTA] guardada OK'); }
+  cerrarModalNota(null, true);
+}
+
+// ===== MODAL CONFIRMAR =====
+function abrirModal() {
+  const overlay = document.getElementById('modalOverlay');
+  const total = platosSeleccionados.reduce((a, p) => a + p.cantidad, 0);
+  const cuerpo = document.getElementById('modalBodyConfirmar');
+  cuerpo.innerHTML =
+    '<p class="modal-q">Vas a generar una comanda con <strong>' + total + '</strong> plato(s)</p>' +
+    '<div class="resumen-list">' +
+      platosSeleccionados.map(p => {
+        const notaHTML = p.nota ? '<div class="resumen-nota">Nota: ' + p.nota + '</div>' : '';
+        return '<div class="resumen-item"><div>' + p.nombre + '</div>' + notaHTML + '<div>x' + p.cantidad + '</div></div>';
+      }).join('') +
+    '</div>' +
+    '<p style="text-align:center;color:#888;font-size:13px;margin-top:12px;">Se guardará en Activas</p>';
+  overlay.classList.add('open');
+}
+
+function cerrarModalConfirm(e, force) {
+  if (force || !e || e.target.id === 'modalOverlay') {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+}
+
+function crearComanda() {
+  const primeraCat = platosSeleccionados[0] ? platosSeleccionados[0].categoria : 'General';
+  comandas.push({
+    id: Date.now(),
+    categoria: primeraCat,
+    platos: platosSeleccionados.map(p => ({ ...p })),
+    fecha: Date.now(),
+    completada: false
+  });
+  platosSeleccionados = [];
+  saveData();
+  renderPlatos();
+  renderSelectedBar();
+  cerrarModalConfirm(null, true);
+  renderActivas();
+  switchTab('activas');
+  setTimeout(() => { var cont = document.getElementById('activasContainer'); if (cont) cont.scrollTo({ top: cont.scrollHeight, behavior: 'smooth' }); }, 200);
+}
+
+// ===== COMANDA: completar / eliminar =====
+function completarComanda(id) {
+  const c = comandas.find(x => x.id === id);
+  if (!c) return;
+  c.completada = true;
+  saveData();
+  renderActivas();
+  renderHistorial();
+}
+
+function eliminarComanda(id) {
+  if (!confirm('¿Eliminar esta comanda?')) return;
+  comandas = comandas.filter(c => c.id !== id);
+  saveData();
+  renderActivas();
+  renderHistorial();
+}
+
+function finalizarComanda(id) {
+  const c = comandas.find(x => x.id === id);
+  if (!c) return;
+  c.completada = true;
+  saveData();
+  renderActivas();
+  renderHistorial();
+  switchTab('activas');
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  var tabBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (tabBtn) tabBtn.classList.add('active');
+  var screen = document.getElementById('screen' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (screen) screen.classList.add('active');
+  if (tab === 'activas') renderActivas();
+  if (tab === 'historial') renderHistorial();
+  if (tab === 'menu') { renderCategorias(); renderPlatos(); }
+}
+
+// ===== INIT =====
+loadData();
+renderCategorias();
+renderPlatos();
+renderSelectedBar();
+renderActivas();
+renderHistorial();
+</script>
+</body>
+</html>
