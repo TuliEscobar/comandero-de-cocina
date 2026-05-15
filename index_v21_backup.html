@@ -4,10 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🍽️ Comandero de Cocina</title>
-<meta name="theme-color" content="#1a1a1a">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch.png">
+  <meta name="theme-color" content="#1a1a1a">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -492,26 +489,6 @@
       margin-top: 4px;
     }
 
-    /* INSTALL BUTTON */
-    #installBtn {
-      display: none;
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      z-index: 999;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      white-space: nowrap;
-    }
-    #installBtn:hover { opacity: 0.9; }
-
     @media (max-width: 390px) {
       .plato-btn .nombre { font-size: 14px; }
     }
@@ -521,7 +498,6 @@
 
 <div class="header">
   <h1>Comandero</h1>
-  <button id="installBtn" onclick="installPWA()">⬇ Instalar App</button>
 </div>
 
 <div class="tabs">
@@ -897,49 +873,6 @@ renderPlatos();
 renderSelectedBar();
 renderActivas();
 renderHistorial();
-
-// ===== PWA INSTALL =====
-var deferredPrompt = null;
-var installBtn = null;
-
-function showInstallBtn() {
-  if (installBtn) installBtn.style.display = 'block';
-}
-
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  showInstallBtn();
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-  installBtn = document.getElementById('installBtn');
-  if (!installBtn) return;
-  if (window.navigator.standalone === false && /Android/.test(navigator.userAgent)) {
-    setTimeout(showInstallBtn, 2000);
-  }
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    showInstallBtn();
-  }
-});
-
-function installPWA() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function(choice) {
-      if (choice.outcome === 'accepted') { if (installBtn) installBtn.style.display = 'none'; }
-      deferredPrompt = null;
-    });
-  } else {
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      alert("Para instalar en iPhone/iPad:\n1. Tocá Compartir (abajo centro)\n2. 'Agregar a pantalla de inicio'\n3. Tocá Agregar (arriba derecha)");
-    } else if (/Android/.test(navigator.userAgent)) {
-      alert("Para instalar: tocá el menú del navegador (⋮) y elegí 'Instalar Comandero' o 'Agregar a pantalla de inicio'.");
-    } else {
-      alert("Para instalar: tocá el ⚙ del navegador → 'Instalar Comandero de Cocina'.");
-    }
-  }
-}
 </script>
 </body>
 </html>
