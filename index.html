@@ -12,12 +12,12 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --primary: #FF6B35;
-      --success: #00C853;
-      --dark: #1a1a1a;
+      --primary: #1a1a1a;  /* negro */
+      --success: #2ecc71;  /* verde */
+      --dark: #0a0a0a;
       --light: #f5f5f5;
       --white: #FFFFFF;
-      --accent: #D4A574;
+      --accent: #444444;  /* gris medio */
       --text: #333;
       --text-muted: #888;
       --bg: #FFFFFF;
@@ -316,7 +316,7 @@
     }
     .plato-nota {
       font-size: 14px;
-      color: #FF9800;
+      color: #333;
       font-style: italic;
       margin-top: 3px;
     }
@@ -452,7 +452,7 @@
     }
     .resumen-nota {
       font-size: 12px;
-      color: #FF9800;
+      color: #333;
       font-style: italic;
       margin-top: 2px;
     }
@@ -521,6 +521,41 @@
     @media (max-width: 390px) {
       .plato-btn .nombre { font-size: 14px; }
     }
+
+  /* ===== TEMA CLARO / OSCURO ===== */
+  #temaBtn {
+    position: fixed; top: 54px; left: 8px; z-index: 999;
+    border-radius: 50px; padding: 5px 11px;
+    border: none; font-size: 20px; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    background: #f0f0f0;
+  }
+  /* Tema oscuro */
+  body.dark-mode { background: #121212; color: #e0e0e0; }
+  body.dark-mode .tabs { background: #1a1a1a; border-bottom-color: #333; }
+  body.dark-mode .tab { color: #888; }
+  body.dark-mode .tab.active { color: #f0f0f0; }
+  body.dark-mode .tab .badge { background: #555; }
+  body.dark-mode .screen { background: #121212; }
+  body.dark-mode .plato-btn { background: #1e1e1e; border-color: #333; color: #e0e0e0; }
+  body.dark-mode .plato-btn .nombre { color: #e0e0e0; }
+  body.dark-mode .plato-btn .ingredientes { color: #888; }
+  body.dark-mode .nota-chip { background: #3e2e00; color: #ffb300; }
+  body.dark-mode .btn-nota-menu { background: rgba(212,165,116,.15); color: #D4A574; }
+  body.dark-mode #selectedBar { background: #1e1e1e; border-top-color: #333; }
+  body.dark-mode #generarBtn { background: #2ecc71; color: #fff; }
+  body.dark-mode .modal { background: #1e1e1e; }
+  body.dark-mode .resumen-item { background: #252525; }
+  body.dark-mode .empty { color: #888; }
+  body.dark-mode .header { background: #0a0a0a; }
+  body.dark-mode #temaBtn { background: #333; }
+  body.dark-mode #modalMesaInput { background: #1e1e1e; color: #e0e0e0; border-color: #333; }
+  body.dark-mode #modalMesaInput:focus { border-color: #555; }
+  body.dark-mode .modal-body p,
+  body.dark-mode .modal-body label { color: #ccc; }
+  body.dark-mode #modalBodyConfirmar p { color: #ccc; }
+  body.dark-mode .resumen-item div { color: #f0f0f0; }
+
   </style>
 </head>
 <body>
@@ -528,6 +563,7 @@
 <div class="header">
   <h1>Comandero</h1>
   <button id="installBtn" onclick="installPWA()">⬇ Instalar App</button>
+  <button id="temaBtn" onclick="toggleTema()" title="Cambiar tema">🌓</button>
 </div>
 
 <div class="tabs">
@@ -586,14 +622,19 @@
   </div>
 </div>
 
-<!-- MODAL: CONFIRMAR COMANDA -->
+<!-- MODAL: CONFIRMAR COMANDA + MESA -->
 <div class="modal-overlay" id="modalOverlay" onclick="cerrarModalConfirm(event)">
   <div class="modal" id="modalContentConfirmar">
     <div class="modal-header">
-      <span>Confirmar Comanda</span>
+      <span style="color:#1a1a1a;">Confirmar Comanda</span>
       <button class="modal-close" onclick="cerrarModalConfirm(null,true)">&times;</button>
     </div>
     <div class="modal-body" id="modalBodyConfirmar"></div>
+    <div style="padding:14px 20px 4px;">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:5px;">Número de Mesa</label>
+      <input type="number" id="modalMesaInput" min="1" max="99" value="1"
+        style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:18px;font-weight:700;text-align:center;font-family:inherit;background:#f5f5f5;color:#1a1a1a;">
+    </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="event.stopPropagation();cerrarModalConfirm(null,true)">Cancelar</button>
       <button class="btn btn-confirm" onclick="event.stopPropagation();crearComanda()">&#10003; Generar</button>
@@ -657,6 +698,19 @@ const ingredientesBase = {
 };
 
 
+
+// ===== TEMA =====
+function toggleTema() {
+  var b = document.body;
+  if (b.classList.contains("dark-mode")) { b.classList.remove("dark-mode"); localStorage.setItem("comandero_tema","claro"); }
+  else { b.classList.add("dark-mode"); localStorage.setItem("comandero_tema","oscuro"); }
+}
+function cargarTema() {
+  var t = localStorage.getItem("comandero_tema");
+  if (t === "oscuro") document.body.classList.add("dark-mode");
+  else if (t === "claro") document.body.classList.remove("dark-mode");
+  else localStorage.setItem("comandero_tema","claro");
+}
 
 // ===== LOAD / SAVE =====
 function saveData() {
@@ -810,9 +864,11 @@ function seleccionarCategoria(cat) {
 }
 
 function togglePlato(id) {
+  // limpiar objetos vacíos primero
+  platosSeleccionados = platosSeleccionados.filter(function(p) { return p && p.id; });
   const info = getPlatoById(id);
   if (!info) return;
-  const idx = platosSeleccionados.findIndex(p => p.id === id);
+  const idx = platosSeleccionados.findIndex(function(p) { return p.id === id; });
   if (idx >= 0) {
     platosSeleccionados.splice(idx, 1);
   } else {
@@ -830,7 +886,8 @@ function togglePlato(id) {
 }
 
 function cambiarCantidad(id, delta) {
-  const sel = platosSeleccionados.find(p => p.id === id);
+  platosSeleccionados = platosSeleccionados.filter(function(p) { return p && p.id; });
+  const sel = platosSeleccionados.find(function(p) { return p.id === id; });
   if (!sel) return;
   sel.cantidad = Math.max(1, sel.cantidad + delta);
   renderPlatos();
@@ -955,6 +1012,7 @@ function eliminarInsumoStock() {
 // Descontar ingredientes de stock al generar una comanda
 function descontarStock(platos) {
   for (const p of platos) {
+    if (!p || !p.id) continue;  // saltar objetos vacíos
     const key = (p.categoria === 'Panesanos' ? 'pan' : p.categoria === 'Pinsas' ? 'pinsa' : 'plt') + '-' + p.id.split('-')[1];
     const ing = ingredientesBase[key];
     if (ing) {
@@ -975,11 +1033,11 @@ function abrirModal() {
   const total = platosSeleccionados.reduce((a, p) => a + p.cantidad, 0);
   const cuerpo = document.getElementById('modalBodyConfirmar');
   cuerpo.innerHTML =
-    '<p class="modal-q">Vas a generar una comanda con <strong>' + total + '</strong> plato(s)</p>' +
+    '<p class="modal-q" style="color:#1a1a1a;">Vas a generar una comanda con <strong>' + total + '</strong> plato(s)</p>' +
     '<div class="resumen-list">' +
-      platosSeleccionados.map(p => {
-        const notaHTML = p.nota ? '<div class="resumen-nota">Nota: ' + p.nota + '</div>' : '';
-        return '<div class="resumen-item"><div>' + p.nombre + '</div>' + notaHTML + '<div>x' + p.cantidad + '</div></div>';
+      platosSeleccionados.map(function(p) {
+        var notaHTML = p.nota ? '<div class="resumen-nota" style="color:#333;">Nota: ' + p.nota + '</div>' : '';
+        return '<div class="resumen-item" style="border:1px solid #e0e0e0;"><div style="font-size:15px;color:#1a1a1a;">' + p.nombre + '</div>' + notaHTML + '<div style="font-weight:700;color:#1a1a1a;">x' + p.cantidad + '</div></div>';
       }).join('') +
     '</div>' +
     '<p style="text-align:center;color:#888;font-size:13px;margin-top:12px;">Se guardará en Activas</p>';
@@ -993,13 +1051,18 @@ function cerrarModalConfirm(e, force) {
 }
 
 function crearComanda() {
-  const primeraCat = platosSeleccionados[0] ? platosSeleccionados[0].categoria : 'General';
+  // limpiar objetos vacíos
+  platosSeleccionados = platosSeleccionados.filter(function(p) { return p && p.id; });
+  var mesaInput = document.getElementById("modalMesaInput");
+  var mesaVal = mesaInput ? (parseInt(mesaInput.value) || 1) : 1;
+  var primeraCat = platosSeleccionados[0] ? platosSeleccionados[0].categoria : "General";
   comandas.push({
     id: Date.now(),
     categoria: primeraCat,
     platos: platosSeleccionados.map(p => ({ ...p })),
     fecha: Date.now(),
-    completada: false
+    completada: false,
+    mesa: mesaVal
   });
   // Descontar stock
   descontarStock(platosSeleccionados);
@@ -1126,6 +1189,7 @@ function renderPedidosMesa() {
 }
 
 function quitarDePedido(index) {
+  pedidosPorMesa[mesaActual] = (pedidosPorMesa[mesaActual] || []).filter(function(p) { return p && p.id; });
   const lista = pedidosPorMesa[mesaActual];
   if (lista) {
     lista.splice(index, 1);
@@ -1200,6 +1264,7 @@ function enviarPedidoCocina() {
 
 // ===== INIT =====
 loadData();
+cargarTema();
 loadStock();
 loadPedidos();
 renderCategorias();
