@@ -532,6 +532,8 @@
 
 <div class="tabs">
   <button class="tab active" id="tabMenu" onclick="switchTab('menu')">&#128218; Menú</button>
+  <button class="tab" id="tabPedidos" onclick="switchTab('pedidos')">&#128222; Pedidos</button>
+  <button class="tab" id="tabStock" onclick="switchTab('stock')">&#128202; Stock</button>
   <button class="tab" id="tabActivas" onclick="switchTab('activas')">&#9889; Activas <span class="badge" id="badgeActivas"></span></button>
   <button class="tab" id="tabHistorial" onclick="switchTab('historial')">&#128196; Historial</button>
 </div>
@@ -546,6 +548,18 @@
   </div>
 </div>
 
+<!-- PANTALLA: PEDIDOS POR MESA -->
+<div class="screen" id="screenPedidos">
+  <div style="margin-bottom:12px;">
+    <label style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;display:block;">Número de Mesa</label>
+    <input type="number" id="pedidoMesa" min="1" max="99" value="1"
+      style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:18px;font-weight:700;text-align:center;font-family:inherit;">
+  </div>
+  <p style="font-size:13px;color:#888;margin-bottom:12px;">Seleccioná los platos desde el Menú, luego tocá <strong>Enviar a Cocina</strong>.</p>
+  <button class="generar-btn" id="enviarPedidoBtn" onclick="enviarPedidoCocina()" style="width:100%;margin-bottom:12px;" disabled>&#128666; Enviar a Cocina</button>
+  <div id="pedidosMesaContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
 <!-- PANTALLA: ACTIVAS -->
 <div class="screen" id="screenActivas">
   <div id="activasContainer"></div>
@@ -554,6 +568,22 @@
 <!-- PANTALLA: HISTORIAL -->
 <div class="screen" id="screenHistorial">
   <div id="historialContainer"></div>
+</div>
+
+<!-- PANTALLA: STOCK -->
+<div class="screen" id="screenStock">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <h2 style="font-size:18px;font-weight:700;">Control de Stock</h2>
+    <button id="toggleEdicionStock" onclick="toggleEdicionStock()" class="btn" style="background:var(--accent);color:#fff;padding:8px 14px;font-size:13px;border-radius:8px;cursor:pointer;border:none;font-weight:600;">✏️ Editar</button>
+  </div>
+  <div id="stockContainer"></div>
+  <div id="editarStockPanel" style="display:none;background:#fff;border-radius:12px;padding:16px;margin-top:12px;border:1px solid #eee;">
+    <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px;">Agregar / Modificar Insumo</label>
+    <input type="text" id="stockNombre" placeholder="Nombre (ej: tomate)" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:8px;">
+    <input type="number" id="stockCantidad" min="0" placeholder="Cantidad" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:8px;">
+    <button onclick="agregarInsumoStock()" class="btn" style="background:var(--success);color:#fff;padding:12px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-bottom:6px;">➕ Agregar Insumo</button>
+    <button onclick="eliminarInsumoStock()" class="btn" style="background:#f0f0f0;color:#666;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;width:100%;">🗑 Eliminar seleccionado</button>
+  </div>
 </div>
 
 <!-- MODAL: CONFIRMAR COMANDA -->
@@ -594,13 +624,39 @@
 
 <script>
 // ===== MENÚ =====
-const menu = {"menu": [{"categoria": "Ensaladas", "icono": "🥗", "platos": [{"id": "ens-4", "nombre": "Atun", "ingredientes": "lechuga, rodajas de tomate, alcaparras, atun, cebolla, cesar"}, {"id": "ens-1", "nombre": "Feta", "ingredientes": "lechuga, tomates gordos, pepino, cebolla, aceitunas, queso rayado, feta, vinagreta"}, {"id": "ens-2", "nombre": "Pollo", "ingredientes": "lechuga, Cherry, queso rayado, nueces, cesar, pollo"}, {"id": "ens-3", "nombre": "Salmon y aguacate", "ingredientes": "lechuga, rodajas de tomate, aguacate, salmon, sesamo, soja"}]}, {"categoria": "Panesanos", "icono": "🥪", "platos": [{"id": "pan-11", "nombre": "Amante", "ingredientes": "Crudo, burrata, higos*, balsamico de higo, crema de pistaccio"}, {"id": "pan-7", "nombre": "Amore Crudo", "ingredientes": "Crudo, tomate, rucula, aceite de trufa, miel, crema de trufa"}, {"id": "pan-5", "nombre": "Caprese", "ingredientes": "Mozzarella, tomate, albahaca, balsamico"}, {"id": "pan-3", "nombre": "Grandioso", "ingredientes": "Milan, rucula, queso rayado, crema de aceitunas"}, {"id": "pan-8", "nombre": "Il Capo", "ingredientes": "Cotto, queso rayado, berenjena?, crema de trufa"}, {"id": "pan-1", "nombre": "Mortadella", "ingredientes": "5 fetas de mortadela"}, {"id": "pan-2", "nombre": "Mortadella di Campeone", "ingredientes": "5 fetas de mortadela, tomate, rúcula y crema pistacho"}, {"id": "pan-6", "nombre": "Pesto Caprese", "ingredientes": "Mozzarella, Cherry con ajo, albahaca, pesto"}, {"id": "pan-10", "nombre": "Pianeta Avocado", "ingredientes": "Tomate, rucula, aguacate, crema de aceitunas"}, {"id": "pan-9", "nombre": "Tonno Buono", "ingredientes": "Atun, tomate, rucula, aceite de limon, crema de aceituna ?"}, {"id": "pan-4", "nombre": "Verdura", "ingredientes": "Berenjena, calabacin, pimientos, rucula, crema de aceitunas"}, {"id": "pan-12", "nombre": "Vita bianca", "ingredientes": "Crudo, burrata, crema de higo, aceite de trufa"}]}, {"categoria": "Pinsas", "icono": "🍕", "platos": [{"id": "pinsa-7", "nombre": "Amore", "ingredientes": "Salsa, mozzarella, breasaola, aceite de trufa, crema picante"}, {"id": "pinsa-2", "nombre": "Capri", "ingredientes": "Salsa, mozzarella, cotto, queso rayado, albahaca"}, {"id": "pinsa-3", "nombre": "Capricciosa", "ingredientes": "Salsa, mozzarella, crudo, queso rayado, albahaca"}, {"id": "pinsa-1", "nombre": "Donna", "ingredientes": "Salsa, mozzarella, Cherry"}, {"id": "pinsa-5", "nombre": "Fueguita", "ingredientes": "Salsa, provolone, mozzarella, espianata, aceite picante"}, {"id": "pinsa-10", "nombre": "Noruega", "ingredientes": "Queso crema, rucula, aguacate, salmon"}, {"id": "pinsa-8", "nombre": "Pesto", "ingredientes": "Mozzarella, Cherry al horno, pesto, albahaca"}, {"id": "pinsa-4", "nombre": "Pistaccione", "ingredientes": "mozzarella, crema de pistacho, mortadela, pistacho triturado, pesto en manga"}, {"id": "pinsa-6", "nombre": "Tonno", "ingredientes": "Salsa, atun, cebolla, aceitunas"}, {"id": "pinsa-11", "nombre": "Tutti", "ingredientes": "Mozzarella, fresa, plátano"}, {"id": "pinsa-12", "nombre": "Tutti trufa", "ingredientes": "Crema de trufa, salsa de trufa, trufa"}, {"id": "pinsa-9", "nombre": "Vegetariana", "ingredientes": "Queso, verduras a la parrilla, cherry al horno, rucula"}]}, {"categoria": "Platos", "icono": "🍝", "platos": [{"id": "plt-8", "nombre": "Arrabiata", "ingredientes": "1 cucharada de aceituna picante, 2 aji picante, 2 salsa de tomate, rigatoni"}, {"id": "plt-6", "nombre": "Bolognesa", "ingredientes": "1 cucharon lleno de bolognesa, tagliatelle"}, {"id": "plt-5", "nombre": "Caprese bresaola", "ingredientes": "Tabla de madera, bresaola 8, a la mitad rucula, queso rallado, aceite de limon, rayadura de limon"}, {"id": "plt-4", "nombre": "Caprese di burrata", "ingredientes": "pesto, burrata al centro, pesto arriba, rucula alrededor, tomate con ajo alrededor de la burrata, nalsamico, aceite y oregano"}, {"id": "plt-3", "nombre": "Caprese mozzarella", "ingredientes": "Mozzarella cortada al centro, tomates grandes 4 al rededor, rucula alrededor, tomates Cherry, balsamico"}, {"id": "plt-10", "nombre": "Gnocci a la sorrentina", "ingredientes": "1.5 de salsa de tomate, 1 puñado de muzza, cocinarlo en la Merry, sale en bowl chico"}, {"id": "plt-7", "nombre": "Pesto Gnocci", "ingredientes": "2 cucharones de crema, 2 cucharas de pesto, gnocchi"}, {"id": "plt-9", "nombre": "Pomodoro", "ingredientes": "2 cucharones de salsa de tomate, rigatoni"}, {"id": "plt-1", "nombre": "Tabla Anti Pasti", "ingredientes": "Cotto (4/2), Crudo (4/2), Mortadella (4/2), Salame (10/5), Espianata (10/5), Provolone (8/4), Parmesano (6/3), Pecorino (4/2), Scarmoza (8/4), Mozzarella (abierta), miel con aceite de trufa, aceitunas, uvas, frutos secos, pan"}, {"id": "plt-2", "nombre": "Tabla de quesos", "ingredientes": "Provolone 6, Scamorsa 6, Parmesano 6, Pecorino 6, Nueces, aceite de trufa y miel, uva"}, {"id": "plt-11", "nombre": "Trufa tagliatelle", "ingredientes": "2 mantequillas, 2 cucharas de pesto de trufa, 1 bowl de queso, 4 rodajas de trufa, pistacho molido, queso"}]}]};
+const menu = {"menu": [{"categoria": "Ensaladas", "icono": "🥗", "platos": [{"id": "ens-4", "nombre": "Atun", "ingredientes": "lechuga, rodajas de tomate, alcaparras, atun, cebolla, cesar"}, {"id": "ens-1", "nombre": "Feta", "ingredientes": "lechuga, tomates gordos, pepino, cebolla, aceitunas, queso rayado, feta, vinagreta"}, {"id": "ens-2", "nombre": "Pollo", "ingredientes": "lechuga, Cherry, queso rayado, nueces, cesar, pollo"}, {"id": "ens-3", "nombre": "Salmon y aguacate", "ingredientes": "lechuga, rodajas de tomate, aguacate, salmon, sesamo, soja"}]}, {"categoria": "Panesanos", "icono": "🥪", "platos": [{"id": "pan-11", "nombre": "Amante", "ingredientes": "Bresaola, queso, higo, balsamico de higo, salsa de trufa"}, {"id": "pan-7", "nombre": "Amore Crudo", "ingredientes": "Crudo, tomate, rucula, aceite de trufa, miel, crema de trufa"}, {"id": "pan-5", "nombre": "Caprese", "ingredientes": "Mozzarella, tomate, albahaca, balsamico"}, {"id": "pan-3", "nombre": "Grandioso", "ingredientes": "Milan, rucula, queso rayado, crema de aceitunas"}, {"id": "pan-8", "nombre": "Il Capo", "ingredientes": "Cotto, queso rayado, berenjena?, crema de trufa"}, {"id": "pan-1", "nombre": "Mortadella", "ingredientes": "5 fetas de mortadela"}, {"id": "pan-2", "nombre": "Mortadella di Campeone", "ingredientes": "5 fetas de mortadela, tomate, rúcula y crema pistacho"}, {"id": "pan-6", "nombre": "Pesto Caprese", "ingredientes": "Mozzarella, Cherry con ajo, albahaca, pesto"}, {"id": "pan-10", "nombre": "Pianeta Avocado", "ingredientes": "Tomate, rucula, aguacate, crema de aceitunas"}, {"id": "pan-9", "nombre": "Tonno Buono", "ingredientes": "Atun, tomate, rucula, aceite de limon, crema de aceituna ?"}, {"id": "pan-4", "nombre": "Verdura", "ingredientes": "Berenjena, calabacin, pimientos, rucula, crema de aceitunas"}, {"id": "pan-12", "nombre": "Vita bianca", "ingredientes": "Crudo, burrata, crema de higo, aceite de trufa"}]}, {"categoria": "Pinsas", "icono": "🍕", "platos": [{"id": "pinsa-7", "nombre": "Amore", "ingredientes": "Salsa, mozzarella, breasaola, aceite de trufa, crema picante"}, {"id": "pinsa-2", "nombre": "Capri", "ingredientes": "Salsa, mozzarella, cotto, queso rayado, albahaca"}, {"id": "pinsa-3", "nombre": "Capricciosa", "ingredientes": "Salsa, mozzarella, crudo, queso rayado, albahaca"}, {"id": "pinsa-1", "nombre": "Donna", "ingredientes": "Salsa, mozzarella, Cherry"}, {"id": "pinsa-5", "nombre": "Fueguita", "ingredientes": "Salsa, provolone, mozzarella, espianata, aceite picante"}, {"id": "pinsa-10", "nombre": "Noruega", "ingredientes": "Queso crema, rucula, aguacate, salmon"}, {"id": "pinsa-8", "nombre": "Pesto", "ingredientes": "Mozzarella, Cherry al horno, pesto, albahaca"}, {"id": "pinsa-4", "nombre": "Pistaccione", "ingredientes": "mozzarella, crema de pistacho, mortadela, pistacho triturado, pesto en manga"}, {"id": "pinsa-6", "nombre": "Tonno", "ingredientes": "Salsa, atun, cebolla, aceitunas"}, {"id": "pinsa-11", "nombre": "Tutti", "ingredientes": "Mozzarella, fresa, plátano"}, {"id": "pinsa-12", "nombre": "Tutti trufa", "ingredientes": "Crema de trufa, salsa de trufa, trufa"}, {"id": "pinsa-9", "nombre": "Vegetariana", "ingredientes": "Queso, verduras a la parrilla, cherry al horno, rucula"}, {"id": "pinsa-13", "nombre": "Margarita", "ingredientes": "queso, tomate"}]}, {"categoria": "Platos", "icono": "🍝", "platos": [{"id": "plt-8", "nombre": "Arrabiata", "ingredientes": "1 cucharada de aceituna picante, 2 aji picante, 2 salsa de tomate, rigatoni"}, {"id": "plt-6", "nombre": "Bolognesa", "ingredientes": "1 cucharon lleno de bolognesa, tagliatelle"}, {"id": "plt-5", "nombre": "Caprese bresaola", "ingredientes": "Tabla de madera, bresaola 8, a la mitad rucula, queso rallado, aceite de limon, rayadura de limon"}, {"id": "plt-4", "nombre": "Caprese di burrata", "ingredientes": "pesto, burrata al centro, pesto arriba, rucula alrededor, tomate con ajo alrededor de la burrata, nalsamico, aceite y oregano"}, {"id": "plt-3", "nombre": "Caprese mozzarella", "ingredientes": "Mozzarella cortada al centro, tomates grandes 4 al rededor, rucula alrededor, tomates Cherry, balsamico"}, {"id": "plt-10", "nombre": "Gnocci a la sorrentina", "ingredientes": "1.5 de salsa de tomate, 1 puñado de muzza, cocinarlo en la Merry, sale en bowl chico"}, {"id": "plt-7", "nombre": "Pesto Gnocci", "ingredientes": "2 cucharones de crema, 2 cucharas de pesto, gnocchi"}, {"id": "plt-9", "nombre": "Pomodoro", "ingredientes": "2 cucharones de salsa de tomate, rigatoni"}, {"id": "plt-1", "nombre": "Tabla Anti Pasti", "ingredientes": "Cotto (4/2), Crudo (4/2), Mortadella (4/2), Salame (10/5), Espianata (10/5), Provolone (8/4), Parmesano (6/3), Pecorino (4/2), Scarmoza (8/4), Mozzarella (abierta), miel con aceite de trufa, aceitunas, uvas, frutos secos, pan"}, {"id": "plt-2", "nombre": "Tabla de quesos", "ingredientes": "Provolone 6, Scamorsa 6, Parmesano 6, Pecorino 6, Nueces, aceite de trufa y miel, uva"}, {"id": "plt-11", "nombre": "Trufa tagliatelle", "ingredientes": "2 mantequillas, 2 cucharas de pesto de trufa, 1 bowl de queso, 4 rodajas de trufa, pistacho molido, queso"}]}]};
 
 // ===== ESTADO =====
 let categorias = menu.menu;
 let categoriaSeleccionada = categorias[0].categoria;
 let platosSeleccionados = [];
 let comandas = [];
+let mesaActual = 1;
+let pedidosPorMesa = {};  // { mesa: [platos] }
+let modoEdicionStock = false;
+
+// ===== INGREDIENTES BASE POR PLATO (para descontar stock) =====
+// Cada plato define qué insumos consume por unidad
+const ingredientesBase = {
+  "ens-4":  {"lechuga":0.02,"tomate":0.05,"atun":0.08},
+  "ens-1":  {"lechuga":0.02,"tomate":0.08,"queso_rayado":0.02,"feta":0.05},
+  "ens-2":  {"lechuga":0.02,"pollo":0.1,"queso_rayado":0.02},
+  "ens-3":  {"lechuga":0.02,"tomate":0.05,"salmon":0.08,"aguacate":0.05},
+  "pan-11": {"bresaola":0.05,"queso":0.03,"higo":0.04},
+  "pan-7":  {"crudo":0.05,"tomate":0.04,"aceite_trufa":0.01,"crema_trufa":0.03},
+  "pan-5":  {"mozzarella":0.07,"tomate":0.06,"albahaca":0.01,"balsamico":0.01},
+  "pan-3":  {"lomo":0.05,"queso_rayado":0.02},
+  "pan-8":  {"cotto":0.05,"queso_rayado":0.02,"berenjena":0.06,"crema_trufa":0.03},
+  "pan-1":  {"mortadela":0.08},
+  "pan-2":  {"mortadela":0.08,"tomate":0.04,"crema_pistacho":0.03},
+  "pan-6":  {"mozzarella":0.07,"cherry":0.05,"pesto":0.02},
+  "pan-10": {"tomate":0.04,"aguacate":0.05,"crema_aceitunas":0.03},
+  "pan-9":  {"atun":0.06,"tomate":0.04,"crema_aceituna":0.03},
+  "pan-4":  {"berenjena":0.05,"calabacin":0.05,"pimiento":0.04,"crema_aceitunas":0.03},
+  "pan-12": {"crudo":0.05,"burrata":0.08,"crema_higo":0.03,"aceite_trufa":0.01},
+};
+
+
 
 // ===== LOAD / SAVE =====
 function saveData() {
@@ -631,16 +687,16 @@ function formatoHora(ts) {
 
 // ===== RENDER: MENÚ =====
 function renderCategorias() {
-  const el = document.getElementById('categoriasContainer');
-  el.innerHTML = categorias.map(c =>
-    '<button class="cat-tab ' + (c.categoria === categoriaSeleccionada ? 'active' : '') +
-    '" onclick="seleccionarCategoria(\'' + c.categoria.replace(/'/g,"\\'") + '\')">' +
-    '<span class="icon">' + c.icono + '</span>' +
-    '<span>' + c.categoria + '</span>' +
-    '</button>'
-  ).join('');
+  var el = document.getElementById('categoriasContainer');
+  el.innerHTML = categorias.map(function(c) {
+    var active = c.categoria === categoriaSeleccionada ? 'active' : '';
+    var catSafe = c.categoria.replace(/'/g, '&#39;');
+    return `<button class="cat-tab ${active}" onclick="seleccionarCategoria('${catSafe}')">
+      <span class="icon">${c.icono}</span>
+      <span>${c.categoria}</span>
+    </button>`;
+  }).join('');
 }
-
 function renderPlatos() {
   const cat = categorias.find(c => c.categoria === categoriaSeleccionada);
   const el = document.getElementById('platosContainer');
@@ -815,7 +871,105 @@ function guardarNotaMenu() {
   cerrarModalNota(null, true);
 }
 
-// ===== MODAL CONFIRMAR =====
+// ===== STOCK =====
+let stockInsumos = {};  // { nombre: cantidad }
+let stockEditarSeleccion = null;
+
+function loadStock() {
+  try {
+    const d = localStorage.getItem('comandero_stock');
+    if (d) stockInsumos = JSON.parse(d);
+    else {
+      // Stock inicial vacío — el usuario lo va cargando
+      stockInsumos = {};
+    }
+  } catch(e) { stockInsumos = {}; }
+}
+
+function saveStock() {
+  localStorage.setItem('comandero_stock', JSON.stringify(stockInsumos));
+}
+
+function renderStock() {
+  const el = document.getElementById('stockContainer');
+  const nombres = Object.keys(stockInsumos);
+  if (nombres.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="icon">&#128202;</div><h2>Stock vacío</h2><p> Tocá "Editar" para agregar insumos.</p></div>';
+    return;
+  }
+  el.innerHTML = nombres.map(n => {
+    const cant = stockInsumos[n];
+    const selClass = stockEditarSeleccion === n ? ' style="border-color:var(--primary);background:#FFF3E0;"' : '';
+    return '<div class="plato-btn' + selClass + '" onclick="seleccionarInsumoStock(\'' + n.replace(/'/g, "\\'") + '\')" style="flex-direction:row;gap:10px;padding:12px 14px;margin-bottom:6px;">' +
+      '<span style="flex:1;font-size:16px;font-weight:700;">' + n + '</span>' +
+      '<span style="font-size:18px;font-weight:700;color:' + (cant < 5 ? '#e53935' : cant < 15 ? '#FF9800' : '#2ecc71') + ';">' +
+        (Number.isInteger(cant) ? cant : cant.toFixed(2)) +
+      '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleEdicionStock() {
+  modoEdicionStock = !modoEdicionStock;
+  const panel = document.getElementById('editarStockPanel');
+  const btn = document.getElementById('toggleEdicionStock');
+  if (modoEdicionStock) {
+    panel.style.display = 'block';
+    btn.textContent = '❌ Cerrar Edición';
+    renderStock();
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '✏️ Editar';
+    stockEditarSeleccion = null;
+    renderStock();
+  }
+}
+
+function seleccionarInsumoStock(nombre) {
+  if (!modoEdicionStock) return;
+  stockEditarSeleccion = nombre;
+  document.getElementById('stockNombre').value = nombre;
+  document.getElementById('stockCantidad').value = stockInsumos[nombre];
+  renderStock();
+}
+
+function agregarInsumoStock() {
+  const nombre = document.getElementById('stockNombre').value.trim();
+  const cant = parseFloat(document.getElementById('stockCantidad').value) || 0;
+  if (!nombre) return;
+  stockInsumos[nombre] = cant;
+  saveStock();
+  renderStock();
+  document.getElementById('stockNombre').value = '';
+  document.getElementById('stockCantidad').value = '';
+}
+
+function eliminarInsumoStock() {
+  if (!stockEditarSeleccion) return;
+  delete stockInsumos[stockEditarSeleccion];
+  stockEditarSeleccion = null;
+  saveStock();
+  renderStock();
+}
+
+// Descontar ingredientes de stock al generar una comanda
+function descontarStock(platos) {
+  for (const p of platos) {
+    const key = (p.categoria === 'Panesanos' ? 'pan' : p.categoria === 'Pinsas' ? 'pinsa' : 'plt') + '-' + p.id.split('-')[1];
+    const ing = ingredientesBase[key];
+    if (ing) {
+      for (const [insumo, porciones] of Object.entries(ing)) {
+        const total = porciones * p.cantidad;
+        stockInsumos[insumo] = (stockInsumos[insumo] || 0) - total;
+        if (stockInsumos[insumo] < 0) stockInsumos[insumo] = 0;
+      }
+    }
+  }
+  saveStock();
+  if (document.getElementById('screenStock').classList.contains('active')) renderStock();
+}
+
+
 function abrirModal() {
   const overlay = document.getElementById('modalOverlay');
   const total = platosSeleccionados.reduce((a, p) => a + p.cantidad, 0);
@@ -847,12 +1001,16 @@ function crearComanda() {
     fecha: Date.now(),
     completada: false
   });
+  // Descontar stock
+  descontarStock(platosSeleccionados);
   platosSeleccionados = [];
   saveData();
   renderPlatos();
   renderSelectedBar();
   cerrarModalConfirm(null, true);
   renderActivas();
+  // Si la pantalla de stock está abierta, actualizarla
+  if (document.getElementById('screenStock').classList.contains('active')) renderStock();
   switchTab('activas');
   setTimeout(() => { var cont = document.getElementById('activasContainer'); if (cont) cont.scrollTo({ top: cont.scrollHeight, behavior: 'smooth' }); }, 200);
 }
@@ -895,11 +1053,155 @@ function switchTab(tab) {
   if (screen) screen.classList.add('active');
   if (tab === 'activas') renderActivas();
   if (tab === 'historial') renderHistorial();
-  if (tab === 'menu') { renderCategorias(); renderPlatos(); }
+  if (tab === 'menu') {
+    renderCategorias(); renderPlatos();
+    // Al volver al menú, cargar los platos de la mesa actual como seleccionados
+    loadPedidos();
+    if (!document.getElementById('screenPedidos').classList.contains('active')) {
+      const listaPedidos = pedidosPorMesa[mesaActual] || [];
+      platosSeleccionados = listaPedidos.map(p => ({ ...p }));
+      renderSelectedBar();
+    }
+  }
+  if (tab === 'stock') { loadStock(); renderStock(); }
+  if (tab === 'pedidos') {
+    // Sincronizar platos seleccionados del menú con la mesa actual
+    loadPedidos();
+    if (platosSeleccionados.length > 0) {
+      const lista = pedidosPorMesa[mesaActual] || [];
+      for (const p of platosSeleccionados) {
+        const idx = lista.findIndex(x => x.id === p.id);
+        if (idx >= 0) { lista[idx].cantidad += p.cantidad; }
+        else { lista.push({ ...p }); }
+      }
+      pedidosPorMesa[mesaActual] = lista;
+      savePedidos();
+      platosSeleccionados = [];
+      renderPlatos(); renderSelectedBar();
+    }
+    renderPedidosMesa();
+  }
+  if (tab === 'pedidos') { renderPedidosMesa(); }
+}
+
+
+// ===== PEDIDOS POR MESA =====
+
+function loadPedidos() {
+  try {
+    const d = localStorage.getItem('comandero_pedidos');
+    if (d) pedidosPorMesa = JSON.parse(d);
+  } catch(e) { pedidosPorMesa = {}; }
+}
+
+function savePedidos() {
+  localStorage.setItem('comandero_pedidos', JSON.stringify(pedidosPorMesa));
+}
+
+function renderPedidosMesa() {
+  loadPedidos();
+  const mesaNum = parseInt(document.getElementById('pedidoMesa').value) || 1;
+  mesaActual = mesaNum;
+  const lista = pedidosPorMesa[mesaActual] || [];
+  const container = document.getElementById('pedidosMesaContainer');
+  const btn = document.getElementById('enviarPedidoBtn');
+
+  btn.disabled = lista.length === 0;
+
+  if (lista.length === 0) {
+    container.innerHTML = '<div class="empty" style="padding:30px;"><div class="icon">&#128222;</div><p style="font-size:14px;">No hay platos seleccionados para esta mesa.</p></div>';
+    return;
+  }
+
+  container.innerHTML = lista.map((p, i) =>
+    '<div class="plato-btn" style="padding:12px 14px;margin-bottom:4px;">' +
+      '<div style="flex:1;">' +
+        '<div style="font-size:16px;font-weight:700;">' + p.nombre + ' <span style="font-size:13px;color:#888;">x' + p.cantidad + '</span></div>' +
+        (p.ingredientes ? '<div style="font-size:12px;color:#888;margin-top:2px;">' + p.ingredientes + '</div>' : '') +
+        (p.nota ? '<div style="font-size:13px;color:#FF9800;font-style:italic;margin-top:2px;">' + p.nota + '</div>' : '') +
+      '</div>' +
+      '<button onclick="event.stopPropagation();quitarDePedido(' + i + ')" style="background:none;border:none;font-size:22px;color:#e53935;cursor:pointer;padding:0 6px;">&times;</button>' +
+    '</div>'
+  ).join('');
+}
+
+function quitarDePedido(index) {
+  const lista = pedidosPorMesa[mesaActual];
+  if (lista) {
+    lista.splice(index, 1);
+    if (lista.length === 0) delete pedidosPorMesa[mesaActual];
+    else pedidosPorMesa[mesaActual] = lista;
+  }
+  savePedidos();
+  renderPedidosMesa();
+  // Si estamos en menú, actualizar platos seleccionados
+  if (document.getElementById('screenMenu').classList.contains('active')) {
+    platosSeleccionados = (pedidosPorMesa[mesaActual] || []).map(p => ({ ...p }));
+    renderPlatos(); renderSelectedBar();
+  }
+}
+
+function cambiarCantidadPedido(index, delta) {
+  const lista = pedidosPorMesa[mesaActual];
+  if (!lista) return;
+  lista[index].cantidad = Math.max(1, lista[index].cantidad + delta);
+  savePedidos();
+  renderPedidosMesa();
+  // Si estamos en menú, actualizar
+  if (document.getElementById('screenMenu').classList.contains('active')) {
+    platosSeleccionados = lista.map(p => ({ ...p }));
+    renderPlatos(); renderSelectedBar();
+  }
+}
+
+// Sincronizar pedidos por mesa cuando el usuario cambia de pantalla
+function syncPlatosAPedido() {
+  loadPedidos();
+  if (platosSeleccionados.length === 0) return;
+  const lista = pedidosPorMesa[mesaActual] || [];
+  for (const p of platosSeleccionados) {
+    const idx = lista.findIndex(x => x.id === p.id);
+    if (idx >= 0) {
+      lista[idx].cantidad += p.cantidad;
+    } else {
+      lista.push({ ...p });
+    }
+  }
+  pedidosPorMesa[mesaActual] = lista;
+  savePedidos();
+  platosSeleccionados = [];
+  renderPlatos();
+  renderSelectedBar();
+}
+
+function enviarPedidoCocina() {
+  const lista = pedidosPorMesa[mesaActual];
+  if (!lista || lista.length === 0) return;
+  const primeraCat = lista[0].categoria || 'Pedido de Mesa';
+  for (const p of lista) {
+    comandas.push({
+      id: Date.now() + Math.random(),
+      categoria: primeraCat,
+      platos: [p],
+      fecha: Date.now(),
+      completada: false,
+      mesa: mesaActual
+    });
+  }
+  delete pedidosPorMesa[mesaActual];
+  savePedidos();
+  saveData();
+  renderActivas();
+  renderPedidosMesa();
+  renderSelectedBar();
+  if (document.getElementById('screenStock').classList.contains('active')) renderStock();
+  alert('Pedido de mesa ' + mesaActual + ' enviado a cocina ✓');
 }
 
 // ===== INIT =====
 loadData();
+loadStock();
+loadPedidos();
 renderCategorias();
 renderPlatos();
 renderSelectedBar();
