@@ -6,8 +6,8 @@
   <title>🍽️ Comandero de Cocina</title>
 <meta name="theme-color" content="#1a1a1a">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="apple-touch.png">
+  <link rel="icon" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -498,12 +498,15 @@
       margin-top: 4px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     /* INSTALL BUTTON */
     #installBtn {
       display: none;
-      position: fixed;
-      top: 10px;
-      right: 10px;
       background: var(--primary);
       color: #fff;
       border: none;
@@ -512,8 +515,6 @@
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      z-index: 999;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       white-space: nowrap;
     }
     #installBtn:hover { opacity: 0.9; }
@@ -524,11 +525,22 @@
 
   /* ===== TEMA CLARO / OSCURO ===== */
   #temaBtn {
-    position: fixed; top: 54px; left: 8px; z-index: 999;
-    border-radius: 50px; padding: 5px 11px;
-    border: none; font-size: 20px; cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
-    background: #f0f0f0;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background 0.2s, transform 0.1s;
+  }
+  #temaBtn:active {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(0.95);
   }
   /* Tema oscuro */
   body.dark-mode { background: #121212; color: #e0e0e0; }
@@ -548,7 +560,7 @@
   body.dark-mode .resumen-item { background: #252525; }
   body.dark-mode .empty { color: #888; }
   body.dark-mode .header { background: #0a0a0a; }
-  body.dark-mode #temaBtn { background: #333; }
+  body.dark-mode #temaBtn { background: rgba(255, 255, 255, 0.15); }
   body.dark-mode #modalMesaInput { background: #1e1e1e; color: #e0e0e0; border-color: #333; }
   body.dark-mode #modalMesaInput:focus { border-color: #555; }
   body.dark-mode .modal-body p,
@@ -562,8 +574,10 @@
 
 <div class="header">
   <h1>Comandero</h1>
-  <button id="installBtn" onclick="installPWA()">⬇ Instalar App</button>
-  <button id="temaBtn" onclick="toggleTema()" title="Cambiar tema">🌓</button>
+  <div class="header-actions">
+    <button id="installBtn" onclick="installPWA()">⬇ Instalar App</button>
+    <button id="temaBtn" onclick="toggleTema()" title="Cambiar tema">🌓</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -665,7 +679,7 @@
 
 <script>
 // ===== MENÚ =====
-const menu = {"menu": [{"categoria": "Ensaladas", "icono": "🥗", "platos": [{"id": "ens-4", "nombre": "Atun", "ingredientes": "lechuga, rodajas de tomate, alcaparras, atun, cebolla, cesar"}, {"id": "ens-1", "nombre": "Feta", "ingredientes": "lechuga, tomates gordos, pepino, cebolla, aceitunas, queso rayado, feta, vinagreta"}, {"id": "ens-2", "nombre": "Pollo", "ingredientes": "lechuga, Cherry, queso rayado, nueces, cesar, pollo"}, {"id": "ens-3", "nombre": "Salmon y aguacate", "ingredientes": "lechuga, rodajas de tomate, aguacate, salmon, sesamo, soja"}]}, {"categoria": "Panesanos", "icono": "🥪", "platos": [{"id": "pan-11", "nombre": "Amante", "ingredientes": "Bresaola, queso, higo, balsamico de higo, salsa de trufa"}, {"id": "pan-7", "nombre": "Amore Crudo", "ingredientes": "Crudo, tomate, rucula, aceite de trufa, miel, crema de trufa"}, {"id": "pan-5", "nombre": "Caprese", "ingredientes": "Mozzarella, tomate, albahaca, balsamico"}, {"id": "pan-3", "nombre": "Grandioso", "ingredientes": "Milan, rucula, queso rayado, crema de aceitunas"}, {"id": "pan-8", "nombre": "Il Capo", "ingredientes": "Cotto, queso rayado, berenjena?, crema de trufa"}, {"id": "pan-1", "nombre": "Mortadella", "ingredientes": "5 fetas de mortadela"}, {"id": "pan-2", "nombre": "Mortadella di Campeone", "ingredientes": "5 fetas de mortadela, tomate, rúcula y crema pistacho"}, {"id": "pan-6", "nombre": "Pesto Caprese", "ingredientes": "Mozzarella, Cherry con ajo, albahaca, pesto"}, {"id": "pan-10", "nombre": "Pianeta Avocado", "ingredientes": "Tomate, rucula, aguacate, crema de aceitunas"}, {"id": "pan-9", "nombre": "Tonno Buono", "ingredientes": "Atun, tomate, rucula, aceite de limon, crema de aceituna ?"}, {"id": "pan-4", "nombre": "Verdura", "ingredientes": "Berenjena, calabacin, pimientos, rucula, crema de aceitunas"}, {"id": "pan-12", "nombre": "Vita bianca", "ingredientes": "Crudo, burrata, crema de higo, aceite de trufa"}]}, {"categoria": "Pinsas", "icono": "🍕", "platos": [{"id": "pinsa-7", "nombre": "Amore", "ingredientes": "Salsa, mozzarella, breasaola, aceite de trufa, crema picante"}, {"id": "pinsa-2", "nombre": "Capri", "ingredientes": "Salsa, mozzarella, cotto, queso rayado, albahaca"}, {"id": "pinsa-3", "nombre": "Capricciosa", "ingredientes": "Salsa, mozzarella, crudo, queso rayado, albahaca"}, {"id": "pinsa-1", "nombre": "Donna", "ingredientes": "Salsa, mozzarella, Cherry"}, {"id": "pinsa-5", "nombre": "Fueguita", "ingredientes": "Salsa, provolone, mozzarella, espianata, aceite picante"}, {"id": "pinsa-10", "nombre": "Noruega", "ingredientes": "Queso crema, rucula, aguacate, salmon"}, {"id": "pinsa-8", "nombre": "Pesto", "ingredientes": "Mozzarella, Cherry al horno, pesto, albahaca"}, {"id": "pinsa-4", "nombre": "Pistaccione", "ingredientes": "mozzarella, crema de pistacho, mortadela, pistacho triturado, pesto en manga"}, {"id": "pinsa-6", "nombre": "Tonno", "ingredientes": "Salsa, atun, cebolla, aceitunas"}, {"id": "pinsa-11", "nombre": "Tutti", "ingredientes": "Mozzarella, fresa, plátano"}, {"id": "pinsa-12", "nombre": "Tutti trufa", "ingredientes": "Crema de trufa, salsa de trufa, trufa"}, {"id": "pinsa-9", "nombre": "Vegetariana", "ingredientes": "Queso, verduras a la parrilla, cherry al horno, rucula"}, {"id": "pinsa-13", "nombre": "Margarita", "ingredientes": "queso, tomate"}]}, {"categoria": "Platos", "icono": "🍝", "platos": [{"id": "plt-8", "nombre": "Arrabiata", "ingredientes": "1 cucharada de aceituna picante, 2 aji picante, 2 salsa de tomate, rigatoni"}, {"id": "plt-6", "nombre": "Bolognesa", "ingredientes": "1 cucharon lleno de bolognesa, tagliatelle"}, {"id": "plt-5", "nombre": "Caprese bresaola", "ingredientes": "Tabla de madera, bresaola 8, a la mitad rucula, queso rallado, aceite de limon, rayadura de limon"}, {"id": "plt-4", "nombre": "Caprese di burrata", "ingredientes": "pesto, burrata al centro, pesto arriba, rucula alrededor, tomate con ajo alrededor de la burrata, nalsamico, aceite y oregano"}, {"id": "plt-3", "nombre": "Caprese mozzarella", "ingredientes": "Mozzarella cortada al centro, tomates grandes 4 al rededor, rucula alrededor, tomates Cherry, balsamico"}, {"id": "plt-10", "nombre": "Gnocci a la sorrentina", "ingredientes": "1.5 de salsa de tomate, 1 puñado de muzza, cocinarlo en la Merry, sale en bowl chico"}, {"id": "plt-7", "nombre": "Pesto Gnocci", "ingredientes": "2 cucharones de crema, 2 cucharas de pesto, gnocchi"}, {"id": "plt-9", "nombre": "Pomodoro", "ingredientes": "2 cucharones de salsa de tomate, rigatoni"}, {"id": "plt-1", "nombre": "Tabla Anti Pasti", "ingredientes": "Cotto (4/2), Crudo (4/2), Mortadella (4/2), Salame (10/5), Espianata (10/5), Provolone (8/4), Parmesano (6/3), Pecorino (4/2), Scarmoza (8/4), Mozzarella (abierta), miel con aceite de trufa, aceitunas, uvas, frutos secos, pan"}, {"id": "plt-2", "nombre": "Tabla de quesos", "ingredientes": "Provolone 6, Scamorsa 6, Parmesano 6, Pecorino 6, Nueces, aceite de trufa y miel, uva"}, {"id": "plt-11", "nombre": "Trufa tagliatelle", "ingredientes": "2 mantequillas, 2 cucharas de pesto de trufa, 1 bowl de queso, 4 rodajas de trufa, pistacho molido, queso"}]}]};
+const menu = {"menu": [{"categoria": "Ensaladas", "icono": "🥗", "platos": [{"id": "ens-4", "nombre": "Atun", "ingredientes": "lechuga, rodajas de tomate, alcaparras, atun, cebolla, cesar"}, {"id": "ens-1", "nombre": "Feta", "ingredientes": "lechuga, tomates gordos, pepino, cebolla, aceitunas, queso rayado, feta, vinagreta"}, {"id": "ens-2", "nombre": "Pollo", "ingredientes": "lechuga, Cherry, queso rayado, nueces, cesar, pollo"}, {"id": "ens-3", "nombre": "Salmon y aguacate", "ingredientes": "lechuga, rodajas de tomate, aguacate, salmon, sesamo, soja"}]}, {"categoria": "Panesanos", "icono": "🥪", "platos": [{"id": "pan-11", "nombre": "Amante", "ingredientes": "Bresaola, queso, higo, balsamico de higo, salsa de trufa, rucula"}, {"id": "pan-7", "nombre": "Amore Crudo", "ingredientes": "Crudo, tomate, rucula, aceite de trufa, miel, crema de trufa"}, {"id": "pan-5", "nombre": "Caprese", "ingredientes": "Mozzarella, tomate, albahaca, balsamico"}, {"id": "pan-3", "nombre": "Grandioso", "ingredientes": "Milan, rucula, queso rayado, crema de aceitunas"}, {"id": "pan-8", "nombre": "Il Capo", "ingredientes": "Cotto, queso rayado, berenjena?, crema de trufa"}, {"id": "pan-1", "nombre": "Mortadella", "ingredientes": "5 fetas de mortadela"}, {"id": "pan-2", "nombre": "Mortadella di Campeone", "ingredientes": "5 fetas de mortadela, tomate, rúcula y crema pistacho"}, {"id": "pan-6", "nombre": "Pesto Caprese", "ingredientes": "Mozzarella, Cherry con ajo, albahaca, pesto"}, {"id": "pan-10", "nombre": "Pianeta Avocado", "ingredientes": "Tomate, rucula, aguacate, crema de aceitunas"}, {"id": "pan-9", "nombre": "Tonno Buono", "ingredientes": "Atun, tomate, rucula, aceite de limon, crema de aceituna ?"}, {"id": "pan-4", "nombre": "Verdura", "ingredientes": "Berenjena, calabacin, pimientos, rucula, crema de aceitunas"}, {"id": "pan-12", "nombre": "Vita bianca", "ingredientes": "Crudo, burrata, crema de higo, aceite de trufa"}]}, {"categoria": "Pinsas", "icono": "🍕", "platos": [{"id": "pinsa-7", "nombre": "Amore", "ingredientes": "Salsa, mozzarella, breasaola, aceite de trufa, crema picante"}, {"id": "pinsa-2", "nombre": "Capri", "ingredientes": "Salsa, mozzarella, cotto, queso rayado, albahaca"}, {"id": "pinsa-3", "nombre": "Capricciosa", "ingredientes": "Salsa, mozzarella, crudo, queso rayado, albahaca"}, {"id": "pinsa-1", "nombre": "Donna", "ingredientes": "Salsa, mozzarella, Cherry"}, {"id": "pinsa-5", "nombre": "Fueguita", "ingredientes": "Salsa, provolone, mozzarella, espianata, aceite picante"}, {"id": "pinsa-10", "nombre": "Noruega", "ingredientes": "Queso crema, rucula, aguacate, salmon"}, {"id": "pinsa-8", "nombre": "Pesto", "ingredientes": "Mozzarella, Cherry al horno, pesto, albahaca"}, {"id": "pinsa-4", "nombre": "Pistaccione", "ingredientes": "mozzarella, crema de pistacho, mortadela, pistacho triturado, pesto en manga"}, {"id": "pinsa-6", "nombre": "Tonno", "ingredientes": "Salsa, atun, cebolla, aceitunas"}, {"id": "pinsa-11", "nombre": "Tutti", "ingredientes": "Mozzarella, fresa, plátano"}, {"id": "pinsa-12", "nombre": "Tutti trufa", "ingredientes": "Crema de trufa, salsa de trufa, trufa"}, {"id": "pinsa-9", "nombre": "Vegetariana", "ingredientes": "Queso, verduras a la parrilla, cherry al horno, rucula"}, {"id": "pinsa-13", "nombre": "Margarita", "ingredientes": "queso, tomate"}]}, {"categoria": "Platos", "icono": "🍝", "platos": [{"id": "plt-8", "nombre": "Arrabiata", "ingredientes": "1 cucharada de aceituna picante, 2 aji picante, 2 salsa de tomate, rigatoni"}, {"id": "plt-6", "nombre": "Bolognesa", "ingredientes": "1 cucharon lleno de bolognesa, tagliatelle"}, {"id": "plt-5", "nombre": "Caprese bresaola", "ingredientes": "Tabla de madera, bresaola 8, a la mitad rucula, queso rallado, aceite de limon, rayadura de limon"}, {"id": "plt-4", "nombre": "Caprese di burrata", "ingredientes": "pesto, burrata al centro, pesto arriba, rucula alrededor, tomate con ajo alrededor de la burrata, nalsamico, aceite y oregano"}, {"id": "plt-3", "nombre": "Caprese mozzarella", "ingredientes": "Mozzarella cortada al centro, tomates grandes 4 al rededor, rucula alrededor, tomates Cherry, balsamico"}, {"id": "plt-10", "nombre": "Gnocci a la sorrentina", "ingredientes": "1.5 de salsa de tomate, 1 puñado de muzza, cocinarlo en la Merry, sale en bowl chico"}, {"id": "plt-7", "nombre": "Pesto Gnocci", "ingredientes": "2 cucharones de crema, 2 cucharas de pesto, gnocchi"}, {"id": "plt-9", "nombre": "Pomodoro", "ingredientes": "2 cucharones de salsa de tomate, rigatoni"}, {"id": "plt-1", "nombre": "Tabla Anti Pasti", "ingredientes": "Cotto (4/2), Crudo (4/2), Mortadella (4/2), Salame (10/5), Espianata (10/5), Provolone (8/4), Parmesano (6/3), Pecorino (4/2), Scarmoza (8/4), Mozzarella (abierta), miel con aceite de trufa, aceitunas, uvas, frutos secos, pan"}, {"id": "plt-2", "nombre": "Tabla de quesos", "ingredientes": "Provolone 6, Scamorsa 6, Parmesano 6, Pecorino 6, Nueces, aceite de trufa y miel, uva"}, {"id": "plt-11", "nombre": "Trufa tagliatelle", "ingredientes": "2 mantequillas, 2 cucharas de pesto de trufa, 1 bowl de queso, 4 rodajas de trufa, pistacho molido, queso"}]}]};
 
 // ===== ESTADO =====
 let categorias = menu.menu;
@@ -683,7 +697,7 @@ const ingredientesBase = {
   "ens-1":  {"lechuga":0.02,"tomate":0.08,"queso_rayado":0.02,"feta":0.05},
   "ens-2":  {"lechuga":0.02,"pollo":0.1,"queso_rayado":0.02},
   "ens-3":  {"lechuga":0.02,"tomate":0.05,"salmon":0.08,"aguacate":0.05},
-  "pan-11": {"bresaola":0.05,"queso":0.03,"higo":0.04},
+  "pan-11": {"bresaola":0.05,"queso":0.03,"higo":0.04,"rucula":0.02},
   "pan-7":  {"crudo":0.05,"tomate":0.04,"aceite_trufa":0.01,"crema_trufa":0.03},
   "pan-5":  {"mozzarella":0.07,"tomate":0.06,"albahaca":0.01,"balsamico":0.01},
   "pan-3":  {"lomo":0.05,"queso_rayado":0.02},
